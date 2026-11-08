@@ -12,6 +12,8 @@ main{padding-top:14px;padding-bottom:50px;display:flex;flex-direction:column;gap
 .gate h1{margin:0;font-size:24px}.gate p{margin:0;color:var(--dim)}
 .gate input[type=password]{font:600 20px inherit;text-align:center;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
 .err{color:#c2362f;font-weight:600;min-height:1.4em}
+.gate input[type=text]#pin{font:600 20px inherit;text-align:center;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+.gate label.hint{display:flex;align-items:center;gap:8px;font-size:15px}.gate label.hint input{width:20px;height:20px}
 .tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
 .tabs button{border:0;background:none;color:var(--ink);padding:9px 6px;font:700 15px inherit;cursor:pointer;position:relative}
 .tabs button small{display:block;font-size:11px;color:var(--dim);font-weight:600}
@@ -46,9 +48,9 @@ function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null
 var PFX="tp."+location.pathname+".";
 function open(pin,box){return crypto.subtle.importKey("raw",new TextEncoder().encode(pin),"PBKDF2",false,["deriveKey"]).then(function(k){return crypto.subtle.deriveKey({name:"PBKDF2",salt:ub(box.salt),iterations:box.iter,hash:"SHA-256"},k,{name:"AES-GCM",length:256},false,["decrypt"]);}).then(function(k){return crypto.subtle.decrypt({name:"AES-GCM",iv:ub(box.iv)},k,ub(box.ct));}).then(function(b){return JSON.parse(new TextDecoder().decode(b));});}
 function tryPin(pin){return open(pin,P.boxes.leader).catch(function(){return open(pin,P.boxes.team);});}
-function gate(msg){app.innerHTML='<div class="gate"><h1>Enter the password</h1><p>Ask your leader for it.</p><input type="password" id="pin" autocomplete="current-password" autocapitalize="off" spellcheck="false" maxlength="64"><label class="hint"><input type="checkbox" id="rem" checked> Remember me on this device</label><button class="btn p" id="go">Open</button><div class="err" id="err">'+e(msg||"")+'</div></div>';
+function gate(msg){app.innerHTML='<div class="gate"><h1>Enter the password</h1><p>Ask your leader for it.</p><input type="password" id="pin" autocomplete="current-password" autocapitalize="off" spellcheck="false" maxlength="64"><label class="hint"><input type="checkbox" id="shw"> Show the password</label><label class="hint"><input type="checkbox" id="rem" checked> Remember me on this device</label><button class="btn p" id="go">Open</button><div class="err" id="err">'+e(msg||"")+'</div></div>';
  var go=function(){var v=document.getElementById("pin").value.trim();if(!v)return;document.getElementById("err").textContent="Opening…";tryPin(v).then(function(d){if(document.getElementById("rem").checked)ls(PFX+"pin",v);start(d);}).catch(function(){document.getElementById("err").textContent="That password didn\u2019t work. Ask your leader for the current one.";});};
- document.getElementById("go").onclick=go;document.getElementById("pin").onkeydown=function(ev){if(ev.key==="Enter")go();};document.getElementById("pin").focus();}
+ document.getElementById("shw").onchange=function(){document.getElementById("pin").type=this.checked?"text":"password";};document.getElementById("go").onclick=go;document.getElementById("pin").onkeydown=function(ev){if(ev.key==="Enter")go();};document.getElementById("pin").focus();}
 function start(d){D=d;document.getElementById("sub").textContent=d.leader?"Leader view":"Team page";var f=document.getElementById("forget");f.hidden=false;f.onclick=function(){ls(PFX+"pin",null);ls(PFX+"me",null);location.reload();};
  crypto.subtle.importKey("raw",ub(d.ck),"AES-GCM",false,["decrypt"]).then(function(k){CK=k;draw(0);});}
 var WK=0;
